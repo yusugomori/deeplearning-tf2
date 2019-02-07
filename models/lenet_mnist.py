@@ -1,21 +1,36 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Conv2D, Dense, Flatten, MaxPooling2D
 from tensorflow.keras.losses import categorical_crossentropy
 from sklearn.metrics import accuracy_score
 from sklearn.utils import shuffle
 
 
-class LogisticRegression(Model):
+class LeNet(Model):
     def __init__(self):
         super().__init__()
-        self.dense = Dense(200, activation='relu')
+        self.conv1 = Conv2D(6, kernel_size=(5, 5),
+                            padding='valid', activation='relu')
+        self.pooling1 = MaxPooling2D(padding='same')
+        self.conv2 = Conv2D(16, kernel_size=(5, 5),
+                            padding='valid', activation='relu')
+        self.pooling2 = MaxPooling2D(padding='same')
+        self.flat = Flatten()
+        self.fc1 = Dense(120, activation='relu')
+        self.fc2 = Dense(84, activation='relu')
         self.out = Dense(10, activation='softmax')
 
     def call(self, x):
-        x = self.dense(x)
+        x = self.conv1(x)
+        x = self.pooling1(x)
+        x = self.conv2(x)
+        x = self.pooling2(x)
+        x = self.flat(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
         y = self.out(x)
+
         return y
 
 
@@ -49,15 +64,15 @@ if __name__ == '__main__':
     '''
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train = (x_train.reshape(-1, 784) / 255).astype(np.float32)
-    x_test = (x_test.reshape(-1, 784) / 255).astype(np.float32)
+    x_train = (x_train.reshape(-1, 28, 28, 1) / 255).astype(np.float32)
+    x_test = (x_test.reshape(-1, 28, 28, 1) / 255).astype(np.float32)
     y_train = np.eye(10)[y_train].astype(np.float32)
     y_test = np.eye(10)[y_test].astype(np.float32)
 
     '''
     Build model
     '''
-    model = LogisticRegression()
+    model = LeNet()
     optimizer = tf.keras.optimizers.Adam()
 
     '''

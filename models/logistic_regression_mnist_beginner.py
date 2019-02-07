@@ -31,5 +31,6 @@ if __name__ == '__main__':
     '''
     Train model
     '''
-    model.fit(x_train, y_train, epochs=5)
-    model.evaluate(x_test, y_test)
+    print(model.trainable_weights)
+    # model.fit(x_train, y_train, epochs=5)
+    # model.evaluate(x_test, y_test)
