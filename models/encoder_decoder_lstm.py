@@ -18,8 +18,6 @@ class Encoder(Model):
         self.embedding = Embedding(input_dim, hidden_dim, mask_zero=True)
         self.lstm = LSTM(hidden_dim, return_state=True)
 
-        self.input_dim = input_dim
-
     def call(self, x):
         x = self.embedding(x)
         y, state_h, state_c = self.lstm(x)
