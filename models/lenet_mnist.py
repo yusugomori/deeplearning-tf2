@@ -34,7 +34,7 @@ class LeNet(Model):
         return y
 
 
-def cross_entropy(label, pred, from_logits=False):
+def compute_loss(label, pred, from_logits=False):
     return categorical_crossentropy(label, pred,
                                     from_logits=from_logits)
 
@@ -42,7 +42,7 @@ def cross_entropy(label, pred, from_logits=False):
 def train_step(x, t):
     with tf.GradientTape() as tape:
         preds = model(x)
-        loss = cross_entropy(t, preds)
+        loss = compute_loss(t, preds)
     grads = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
@@ -51,7 +51,7 @@ def train_step(x, t):
 
 def test_step(x, t):
     preds = model(x)
-    loss = cross_entropy(t, preds)
+    loss = compute_loss(t, preds)
 
     return loss.numpy(), preds.numpy()
 
