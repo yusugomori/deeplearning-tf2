@@ -176,7 +176,6 @@ if __name__ == '__main__':
         train_loss = 0.
 
         for batch in range(n_batches):
-            print('\tbatch {}/{}'.format(batch+1, n_batches))
             start = batch * batch_size
             end = start + batch_size
 
