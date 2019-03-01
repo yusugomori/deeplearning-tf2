@@ -4,7 +4,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers \
     import Dense, Embedding, LSTM, GRU, TimeDistributed
-from tensorflow.keras.losses import sparse_categorical_crossentropy
+from tensorflow.keras.losses \
+    import sparse_categorical_crossentropy, categorical_crossentropy
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from utils.datasets.small_parallel_enja import load_small_parallel_enja
 from utils.preprocessing.sequence import sort
@@ -87,28 +88,37 @@ class EncoderDecoder(Model):
 
         output = tf.convert_to_tensor(output, dtype=tf.float32)
         output = tf.transpose(output, perm=[1, 0, 2])
+
         return output
 
 
 def compute_loss(label, pred, from_logits=False):
-    return sparse_categorical_crossentropy(label, pred,
-                                           from_logits=from_logits)
+    return categorical_crossentropy(label, pred,
+                                    from_logits=from_logits)
 
 
-def train_step(x, t, teacher_forcing_rate=0.5):
+def train_step(x, t, depth_t,
+               teacher_forcing_rate=0.5,
+               pad_value=0):
     use_teacher_forcing = (random.random() < teacher_forcing_rate)
     with tf.GradientTape() as tape:
         preds = model(x, t, use_teacher_forcing=use_teacher_forcing)
-        loss = compute_loss(t, preds)
+        label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
+        mask_t = tf.cast(tf.not_equal(t, pad_value), tf.float32)
+        label = label * mask_t[:, :, tf.newaxis]
+        loss = compute_loss(label, preds)
     grads = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
     return loss.numpy(), preds.numpy()
 
 
-def valid_step(x, t):
+def valid_step(x, t, depth_t, pad_value=0):
     preds = model(x, t, use_teacher_forcing=False)
-    loss = compute_loss(t, preds)
+    label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
+    mask_t = tf.cast(tf.not_equal(t, pad_value), tf.float32)
+    label = label * mask_t[:, :, tf.newaxis]
+    loss = compute_loss(label, preds)
 
     return loss.numpy(), preds.numpy()
 
@@ -145,7 +155,7 @@ if __name__ == '__main__':
     x_valid, y_valid = sort(x_valid, y_valid)
     x_test, y_test = sort(x_test, y_test)
 
-    train_size = 10000
+    train_size = 40000
     valid_size = 200
     test_size = 10
     x_train, y_train = x_train[:train_size], y_train[:train_size]
@@ -166,7 +176,7 @@ if __name__ == '__main__':
     '''
     Train model
     '''
-    epochs = 10
+    epochs = 20
     batch_size = 100
     n_batches = len(x_train) // batch_size
 
@@ -182,14 +192,14 @@ if __name__ == '__main__':
             _x_train = pad_sequences(x_train[start:end], padding='post')
             _y_train = pad_sequences(y_train[start:end], padding='post')
 
-            loss, _ = train_step(_x_train, _y_train)
+            loss, _ = train_step(_x_train, _y_train, num_y)
             train_loss += loss.sum()
 
         train_loss = train_loss / train_size
 
         _x_valid = pad_sequences(x_valid, padding='post')
         _y_valid = pad_sequences(y_valid, padding='post')
-        valid_loss, preds = valid_step(_x_valid, _y_valid)
+        valid_loss, preds = valid_step(_x_valid, _y_valid, num_y)
         valid_loss = valid_loss.sum() / valid_size
         print('Valid loss: {:.3}'.format(valid_loss))
 
