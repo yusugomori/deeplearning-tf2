@@ -1,4 +1,5 @@
 from .Attention import Attention
 from .DotProductAttention import DotProductAttention
+from .MultiHeadAttention import MultiHeadAttention
 from .PositionalEncoding import PositionalEncoding
 from .ScaledDotProductAttention import ScaledDotProductAttention

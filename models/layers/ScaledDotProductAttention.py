@@ -23,6 +23,7 @@ class ScaledDotProductAttention(Layer):
         score = tf.exp(score)
         if mask is not None:
             # suppose `mask` is a mask of source
+            # in source-target-attention, source is `k` and `v`
             mask = tf.cast(mask, tf.float32)
             score *= mask[:, tf.newaxis, :]
 
