@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.layers import Layer
-from tensorflow.python.util import nest
 
 
 class Attention(Layer):
@@ -70,7 +69,4 @@ class Attention(Layer):
         return (input_shape[0], input_shape[1], self.output_dim)
 
     def compute_mask(self, inputs, mask):
-        # partially copied from tensorflow.keras.layers.LSTM.compute_mask
-        mask = nest.flatten(mask)[0]
-        output_mask = mask
-        return output_mask
+        return mask
