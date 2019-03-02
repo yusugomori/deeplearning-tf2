@@ -1,5 +1,6 @@
 from .Attention import Attention
 from .DotProductAttention import DotProductAttention
+from .LayerNormalization import LayerNormalization
 from .MultiHeadAttention import MultiHeadAttention
 from .PositionalEncoding import PositionalEncoding
 from .ScaledDotProductAttention import ScaledDotProductAttention
