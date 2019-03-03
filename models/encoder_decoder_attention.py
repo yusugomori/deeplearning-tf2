@@ -138,7 +138,7 @@ if __name__ == '__main__':
         (x_test, y_test), \
         (num_x, num_y), \
         (w2i_x, w2i_y), (i2w_x, i2w_y) = \
-        load_small_parallel_enja(to_ja=True)
+        load_small_parallel_enja(to_ja=True, add_bos=False)
 
     N = len(x_train)
     train_size = int(N * 0.8)
