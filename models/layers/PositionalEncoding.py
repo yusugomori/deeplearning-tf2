@@ -8,16 +8,16 @@ class PositionalEncoding(Layer):
     Positional encoding layer with sinusoid
     '''
     def __init__(self, output_dim,
-                 maxlen=6000,
+                 max_len=6000,
                  **kwargs):
         self.supports_masking = True
         self.output_dim = output_dim
-        self.maxlen = maxlen
+        self.max_len = max_len
         super().__init__(**kwargs)
 
     def build(self, input_shape):
         self.PE = self.add_weight(name='PE',
-                                  shape=(self.maxlen,
+                                  shape=(self.max_len,
                                          self.output_dim),
                                   initializer=self.initializer,
                                   trainable=False)
@@ -30,7 +30,7 @@ class PositionalEncoding(Layer):
 
     def initializer(self, input_shape, dtype=tf.float32):
         pe = np.zeros(shape=input_shape, dtype=np.float32)
-        pos = np.arange(0, self.maxlen)[:, np.newaxis]
+        pos = np.arange(0, self.max_len)[:, np.newaxis]
         div = np.power(10000,
                        np.arange(0, self.output_dim, 2) / self.output_dim)
         pe[:, 0::2] = np.sin(pos / div)

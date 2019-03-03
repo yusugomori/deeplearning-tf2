@@ -12,11 +12,11 @@ class LayerNormalization(Layer):
 
     def build(self, input_shape):
         self.gamma = self.add_weight(name='gamma',
-                                     shape=input_shape,
+                                     shape=(input_shape[-1]),
                                      initializer='ones')
 
         self.beta = self.add_weight(name='beta',
-                                    shape=input_shape,
+                                    shape=(input_shape[-1]),
                                     initializer='zeros')
         super().build(input_shape)
 

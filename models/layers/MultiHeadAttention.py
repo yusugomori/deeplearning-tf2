@@ -58,7 +58,9 @@ class MultiHeadAttention(Layer):
         k = tf.reshape(k, shape=(-1, k.shape[-2], k.shape[-1]))
         v = tf.reshape(v, shape=(-1, v.shape[-2], v.shape[-1]))
 
-        mask = tf.tile(mask, [self.h, 1])
+        if mask is not None:
+            multiples = [self.h] + [1] * (len(mask.shape) - 1)
+            mask = tf.tile(mask, multiples=multiples)
 
         c = self.attn(q, k, v, mask=mask)
         c = tf.split(c, self.h, axis=0)

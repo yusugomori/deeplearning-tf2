@@ -7,7 +7,6 @@ class DotProductAttention(Layer):
     def __init__(self,
                  d_model,
                  **kwargs):
-        self.supports_masking = True
         self.d_model = d_model
         super().__init__(**kwargs)
 
@@ -23,8 +22,10 @@ class DotProductAttention(Layer):
         if mask is not None:
             # suppose `mask` is a mask of source
             # in source-target-attention, source is `k` and `v`
+            if len(mask.shape) == 2:
+                mask = mask[:, tf.newaxis, :]
             mask = tf.cast(mask, tf.float32)
-            score *= mask[:, tf.newaxis, :]
+            score *= mask
 
         a = score / tf.reduce_sum(score, axis=-1, keepdims=True)
         c = tf.einsum('ijk,ikl->ijl', a, v)
