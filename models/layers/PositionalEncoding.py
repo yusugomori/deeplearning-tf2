@@ -38,7 +38,7 @@ class PositionalEncoding(Layer):
                       for pos in range(self.max_len)])
 
         pe[:, 0::2] = np.sin(pe[:, 0::2])
-        pe[:, 1::2] = np.sin(pe[:, 1::2])
+        pe[:, 1::2] = np.cos(pe[:, 1::2])
 
         return tf.convert_to_tensor(pe, dtype=tf.float32)
 
