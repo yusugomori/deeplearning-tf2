@@ -56,7 +56,7 @@ class Transformer(Model):
                 tf.tile(target_mask[:, tf.newaxis, :],
                         [1, subsequent_mask.shape[1], 1])
             target_mask = \
-                tf.greater(target_mask + subsequent_mask, 0)
+                tf.greater(target_mask + subsequent_mask, 1)
         else:
             batch_size = len(source)
             len_target_sequences = self._max_len
