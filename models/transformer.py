@@ -222,8 +222,8 @@ class DecoderLayer(Model):
         z = self.norm2(h + z)
 
         y = self.ff(z)
-        y = self.dropout2(y)
-        y = self.norm2(z + y)
+        y = self.dropout3(y)
+        y = self.norm3(z + y)
 
         return y
 
