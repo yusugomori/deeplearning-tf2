@@ -96,7 +96,7 @@ class Transformer(Model):
 
     def subsequence_mask(self, x):
         shape = (x.shape[1], x.shape[1])
-        mask = np.triu(np.ones(shape, dtype=np.int32).T, k=0).T
+        mask = np.tril(np.ones(shape, dtype=np.int32), k=0)
         mask = tf.convert_to_tensor(mask, dtype=tf.float32)
         return tf.tile(mask[tf.newaxis, :, :], [x.shape[0], 1, 1])
 
