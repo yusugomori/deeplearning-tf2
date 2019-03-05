@@ -70,18 +70,15 @@ class Transformer(Model):
                              source_mask=source_mask)
             output = self.out(y)
         else:
-            y = tf.ones((batch_size, 1), dtype=tf.int64) * self._BOS
-            output = []
+            output = tf.ones((batch_size, 1), dtype=tf.int32) * self._BOS
 
             for t in range(len_target_sequences):
-                out = self.decoder(y, hs, source_mask=source_mask)
-                out = self.out(out)
-                output.append(out[:, -1, :])
-                out = tf.argmax(out[:, -1:, :], axis=-1)
-                y = tf.concat([y, out], axis=-1)
-
-            output = tf.convert_to_tensor(output, dtype=tf.float32)
-            output = tf.transpose(output, perm=[1, 0, 2])
+                out = self.decoder(output, hs,
+                                   mask=target_mask,
+                                   source_mask=source_mask)
+                out = self.out(out)[:, -1:, :]
+                out = tf.argmax(out, axis=-1, output_type=tf.int32)
+                output = tf.concat([output, out], axis=-1)
 
         return output
 
