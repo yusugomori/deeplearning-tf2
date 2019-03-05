@@ -6,8 +6,8 @@ from tensorflow.keras.layers import Layer
 class Attention(Layer):
     '''
     Reference:
-        Effective Approaches to Attention-based Neural Machine Translation
-        https://arxiv.org/pdf/1508.04025.pdf
+        "Effective Approaches to Attention-based Neural Machine Translation"
+        https://arxiv.org/abs/1508.04025
     '''
     def __init__(self,
                  output_dim,
