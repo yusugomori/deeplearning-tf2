@@ -39,6 +39,17 @@ class MultiHeadAttention(Layer):
                                    initializer='glorot_normal',
                                    trainable=True)
 
+        self.W_o = self.add_weight(name='W_o',
+                                   shape=(self.h * self.d_v,
+                                          self.d_model),
+                                   initializer='glorot_normal',
+                                   trainable=True)
+
+        self.b_o = self.add_weight(name='b_o',
+                                   shape=(self.d_model),
+                                   initializer='zeros',
+                                   trainable=True)
+
         super().build(input_shape)
 
     def call(self, q, k, v, mask=None):
@@ -66,7 +77,9 @@ class MultiHeadAttention(Layer):
         c = tf.split(c, self.h, axis=0)
         c = tf.concat(c, axis=-1)
 
-        return c
+        out = tf.einsum('ijk,kl->ijl', c, self.W_o) + self.b_o
+
+        return out
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], input_shape[1], self.h * self.d_v)
