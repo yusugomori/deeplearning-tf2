@@ -53,18 +53,10 @@ class MultiHeadAttention(Layer):
         super().build(input_shape)
 
     def call(self, q, k, v, mask=None):
-        q = tf.einsum('hijk,hkl->hijl',
-                      tf.tile(q[tf.newaxis, :, :, :],
-                              [self.h, 1, 1, 1]),
-                      self.W_q)
-        k = tf.einsum('hijk,hkl->hijl',
-                      tf.tile(k[tf.newaxis, :, :, :],
-                              [self.h, 1, 1, 1]),
-                      self.W_k)
-        v = tf.einsum('hijk,hkl->hijl',
-                      tf.tile(v[tf.newaxis, :, :, :],
-                              [self.h, 1, 1, 1]),
-                      self.W_v)
+        q = tf.einsum('ijk,hkl->hijl', q, self.W_q)
+        k = tf.einsum('ijk,hkl->hijl', k, self.W_k)
+        v = tf.einsum('ijk,hkl->hijl', v, self.W_v)
+
         q = tf.reshape(q, shape=(-1, q.shape[-2], q.shape[-1]))
         k = tf.reshape(k, shape=(-1, k.shape[-2], k.shape[-1]))
         v = tf.reshape(v, shape=(-1, v.shape[-2], v.shape[-1]))
