@@ -359,7 +359,6 @@ if __name__ == '__main__':
 
         for i, source in enumerate(x_test):
             out = test_step(np.array(source)[np.newaxis, :])[0]
-            out = tf.argmax(out, axis=-1).numpy()
             out = ' '.join(ids_to_sentence(out, i2w_y))
             source = ' '.join(ids_to_sentence(source, i2w_x))
             target = ' '.join(ids_to_sentence(y_test[i], i2w_y))
