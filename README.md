@@ -2,6 +2,8 @@
 
 Implementations of neural network models with tf (>=2.0)
 
+See also implementations with PyTorch 1.0 [here](https://github.com/yusugomori/deeplearning-pytorch).
+
 ## Requirements
 
 * TensorFlow >= 2.0
