@@ -2,8 +2,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense
-from tensorflow.keras.losses import categorical_crossentropy
-from sklearn.metrics import accuracy_score
 from sklearn.utils import shuffle
 
 
@@ -24,9 +22,8 @@ if __name__ == '__main__':
     tf.random.set_seed(1234)
 
     @tf.function
-    def compute_loss(label, pred, from_logits=False):
-        return categorical_crossentropy(label, pred,
-                                        from_logits=from_logits)
+    def compute_loss(label, pred):
+        return criterion(label, pred)
 
     @tf.function
     def train_step(x, t):
@@ -63,6 +60,7 @@ if __name__ == '__main__':
     Build model
     '''
     model = MLP()
+    criterion = tf.losses.CategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
 
     '''

@@ -248,9 +248,8 @@ if __name__ == '__main__':
     np.random.seed(1234)
     tf.random.set_seed(1234)
 
-    def compute_loss(label, pred, from_logits=False):
-        return sparse_categorical_crossentropy(label, pred,
-                                               from_logits=from_logits)
+    def compute_loss(label, pred):
+        return criterion(label, pred)
 
     def train_step(x, t, depth_t):
         with tf.GradientTape() as tape:
@@ -296,8 +295,8 @@ if __name__ == '__main__':
     x_valid, y_valid = sort(x_valid, y_valid)
     x_test, y_test = sort(x_test, y_test)
 
-    train_size = 4
-    valid_size = 2
+    train_size = 40000
+    valid_size = 200
     test_size = 10
     x_train, y_train = x_train[:train_size], y_train[:train_size]
     x_valid, y_valid = x_valid[:valid_size], y_valid[:valid_size]
@@ -313,6 +312,7 @@ if __name__ == '__main__':
                         d_model=128,
                         d_ff=128,
                         max_len=20)
+    criterion = tf.losses.SparseCategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
 
     '''

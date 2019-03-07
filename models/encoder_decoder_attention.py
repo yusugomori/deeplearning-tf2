@@ -4,8 +4,6 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers \
     import Dense, Embedding, LSTM, GRU, TimeDistributed
-from tensorflow.keras.losses \
-    import sparse_categorical_crossentropy, categorical_crossentropy
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from utils.datasets.small_parallel_enja import load_small_parallel_enja
 from utils.preprocessing.sequence import sort
@@ -91,9 +89,8 @@ if __name__ == '__main__':
     tf.random.set_seed(1234)
 
     @tf.function
-    def compute_loss(label, pred, from_logits=False):
-        return categorical_crossentropy(label, pred,
-                                        from_logits=from_logits)
+    def compute_loss(label, pred):
+        return criterion(label, pred)
 
     # @tf.function
     def train_step(x, t, depth_t,
@@ -166,6 +163,7 @@ if __name__ == '__main__':
     output_dim = num_y
 
     model = EncoderDecoder(input_dim, hidden_dim, output_dim)
+    criterion = tf.losses.CategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
 
     '''
