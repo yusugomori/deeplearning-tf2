@@ -7,12 +7,14 @@ from sklearn.metrics import accuracy_score
 from sklearn.utils import shuffle
 
 
-class LogisticRegression(Model):
+class MLP(Model):
     def __init__(self):
         super().__init__()
+        self.dense = Dense(200, activation='relu')
         self.out = Dense(10, activation='softmax')
 
     def call(self, x):
+        x = self.dense(x)
         y = self.out(x)
         return y
 
@@ -60,7 +62,7 @@ if __name__ == '__main__':
     '''
     Build model
     '''
-    model = LogisticRegression()
+    model = MLP()
     optimizer = tf.keras.optimizers.Adam()
 
     '''

@@ -22,6 +22,7 @@ if __name__ == '__main__':
     Build model
     '''
     model = Sequential([
+        Dense(200, activation='relu'),
         Dense(10, activation='softmax')
     ])
 
