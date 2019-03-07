@@ -58,6 +58,7 @@ class ResNet34(object):
 
 if __name__ == '__main__':
     np.random.seed(1234)
+    tf.random.set_seed(1234)
 
     '''
     Load data

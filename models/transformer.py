@@ -49,7 +49,7 @@ class Transformer(Model):
         source_mask = self.sequence_mask(source)
 
         if target is not None:
-            len_target_sequences = len(target[0])
+            len_target_sequences = target.shape[1]
             target_mask = self.sequence_mask(target)
             subsequent_mask = self.subsequence_mask(target)
             target_mask = \
@@ -244,46 +244,37 @@ class FFN(Model):
         return y
 
 
-def compute_loss(label, pred, from_logits=False):
-    return categorical_crossentropy(label, pred,
-                                    from_logits=from_logits)
-
-
-def train_step(x, t, depth_t):
-    with tf.GradientTape() as tape:
-        preds = model(x, t)
-        # loss = compute_loss(t, preds)
-        label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
-        mask_t = tf.cast(tf.not_equal(t, 0), tf.float32)
-        label = label * mask_t[:, :, tf.newaxis]
-        loss = compute_loss(label, preds)
-    grads = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-    return loss.numpy(), preds.numpy()
-
-
-def valid_step(x, t, depth_t):
-    preds = model(x, t)
-    label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
-    mask_t = tf.cast(tf.not_equal(t, 0), tf.float32)
-    label = label * mask_t[:, :, tf.newaxis]
-    loss = compute_loss(label, preds)
-
-    return loss.numpy(), preds.numpy()
-
-
-def test_step(x):
-    preds = model(x)
-    return preds.numpy()
-
-
-def ids_to_sentence(ids, i2w):
-    return [i2w[id] for id in ids]
-
-
 if __name__ == '__main__':
     np.random.seed(1234)
+    tf.random.set_seed(1234)
+
+    def compute_loss(label, pred, from_logits=False):
+        return sparse_categorical_crossentropy(label, pred,
+                                               from_logits=from_logits)
+
+    def train_step(x, t, depth_t):
+        with tf.GradientTape() as tape:
+            preds = model(x, t)
+            loss = compute_loss(t, preds)
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
+        train_loss(loss)
+
+        return preds
+
+    def valid_step(x, t, depth_t):
+        preds = model(x, t)
+        loss = compute_loss(t, preds)
+        valid_loss(loss)
+
+        return preds
+
+    def test_step(x):
+        preds = model(x)
+        return preds
+
+    def ids_to_sentence(ids, i2w):
+        return [i2w[id] for id in ids]
 
     '''
     Load data
@@ -305,8 +296,8 @@ if __name__ == '__main__':
     x_valid, y_valid = sort(x_valid, y_valid)
     x_test, y_test = sort(x_test, y_test)
 
-    train_size = 40000
-    valid_size = 200
+    train_size = 4
+    valid_size = 2
     test_size = 10
     x_train, y_train = x_train[:train_size], y_train[:train_size]
     x_valid, y_valid = x_valid[:valid_size], y_valid[:valid_size]
@@ -331,11 +322,12 @@ if __name__ == '__main__':
     batch_size = 100
     n_batches = len(x_train) // batch_size
 
+    train_loss = tf.keras.metrics.Mean()
+    valid_loss = tf.keras.metrics.Mean()
+
     for epoch in range(epochs):
         print('-' * 20)
         print('Epoch: {}'.format(epoch+1))
-        train_loss = 0.
-        valid_loss = 0.
 
         for batch in range(n_batches):
             start = batch * batch_size
@@ -343,21 +335,16 @@ if __name__ == '__main__':
 
             _x_train = pad_sequences(x_train[start:end], padding='post')
             _y_train = pad_sequences(y_train[start:end], padding='post')
-
-            loss, _ = train_step(_x_train, _y_train, num_y)
-            train_loss += loss.sum()
-
-        train_loss = train_loss / train_size
+            train_step(_x_train, _y_train, num_y)
 
         _x_valid = pad_sequences(x_valid, padding='post')
         _y_valid = pad_sequences(y_valid, padding='post')
-        valid_loss, preds = valid_step(_x_valid, _y_valid, num_y)
-        valid_loss = valid_loss.sum() / valid_size
-        print('Valid loss: {:.3}'.format(valid_loss))
+        valid_step(_x_valid, _y_valid, num_y)
+        print('Valid loss: {:.3}'.format(valid_loss.result()))
 
         for i, source in enumerate(x_test):
             out = test_step(np.array(source)[np.newaxis, :])[0]
-            out = ' '.join(ids_to_sentence(out, i2w_y))
+            out = ' '.join(ids_to_sentence(out.numpy(), i2w_y))
             source = ' '.join(ids_to_sentence(source, i2w_x))
             target = ' '.join(ids_to_sentence(y_test[i], i2w_y))
             print('>', source)

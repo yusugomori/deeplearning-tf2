@@ -34,30 +34,35 @@ class LeNet(Model):
         return y
 
 
-def compute_loss(label, pred, from_logits=False):
-    return categorical_crossentropy(label, pred,
-                                    from_logits=from_logits)
-
-
-def train_step(x, t):
-    with tf.GradientTape() as tape:
-        preds = model(x)
-        loss = compute_loss(t, preds)
-    grads = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-    return loss.numpy(), preds.numpy()
-
-
-def test_step(x, t):
-    preds = model(x)
-    loss = compute_loss(t, preds)
-
-    return loss.numpy(), preds.numpy()
-
-
 if __name__ == '__main__':
     np.random.seed(1234)
+    tf.random.set_seed(1234)
+
+    @tf.function
+    def compute_loss(label, pred, from_logits=False):
+        return categorical_crossentropy(label, pred,
+                                        from_logits=from_logits)
+
+    @tf.function
+    def train_step(x, t):
+        with tf.GradientTape() as tape:
+            preds = model(x)
+            loss = compute_loss(t, preds)
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
+        train_loss(loss)
+        train_acc(t, preds)
+
+        return preds
+
+    @tf.function
+    def test_step(x, t):
+        preds = model(x)
+        loss = compute_loss(t, preds)
+        test_loss(loss)
+        test_acc(t, preds)
+
+        return preds
 
     '''
     Load data
@@ -82,28 +87,24 @@ if __name__ == '__main__':
     batch_size = 100
     n_batches = x_train.shape[0] // batch_size
 
+    train_loss = tf.keras.metrics.Mean()
+    train_acc = tf.keras.metrics.CategoricalAccuracy()
+    test_loss = tf.keras.metrics.Mean()
+    test_acc = tf.keras.metrics.CategoricalAccuracy()
+
     for epoch in range(epochs):
-        train_loss = 0.
 
         _x_train, _y_train = shuffle(x_train, y_train, random_state=42)
+
         for batch in range(n_batches):
             start = batch * batch_size
             end = start + batch_size
-
-            loss, preds = \
-                train_step(_x_train[start:end],
-                           _y_train[start:end])
-            train_loss += loss
-
-        train_loss = np.mean(train_loss)
+            train_step(_x_train[start:end], _y_train[start:end])
 
         if epoch % 5 == 4 or epoch == epochs - 1:
-            test_loss, preds = test_step(x_test, y_test)
-            test_loss = np.mean(test_loss)
-            test_acc = \
-                accuracy_score(y_test.argmax(axis=1), preds.argmax(axis=1))
+            preds = test_step(x_test, y_test)
             print('Epoch: {}, Valid Cost: {:.3f}, Valid Acc: {:.3f}'.format(
                 epoch+1,
-                test_loss,
-                test_acc
+                test_loss.result(),
+                test_acc.result()
             ))

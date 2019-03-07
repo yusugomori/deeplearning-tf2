@@ -6,6 +6,7 @@ from tensorflow.keras.layers import Conv2D, Dense, Flatten, MaxPooling2D
 
 if __name__ == '__main__':
     np.random.seed(1234)
+    tf.random.set_seed(1234)
 
     '''
     Load data
