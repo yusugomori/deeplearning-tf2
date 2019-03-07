@@ -24,6 +24,7 @@ class EncoderDecoder(Model):
 
         self._BOS = bos_value
         self._max_len = max_len
+        self.output_dim = output_dim
 
     def call(self, source, target=None, use_teacher_forcing=False):
         batch_size = source.shape[0]
@@ -37,22 +38,19 @@ class EncoderDecoder(Model):
         # output, _ = self.decoder(target, states)
         # return output
 
-        y = tf.ones((batch_size, 1)) * self._BOS
-        output = []
+        y = tf.ones((batch_size, 1), dtype=tf.int32) * self._BOS
+        output = tf.zeros((batch_size, 1, self.output_dim), dtype=tf.float32)
 
         for t in range(len_target_sequences):
             out, states = self.decoder(y, states)
-            output.append(out[:, 0])
+            output = tf.concat([output, out[:, :1]], axis=1)
 
             if use_teacher_forcing and target is not None:
                 y = target[:, t][:, tf.newaxis]
             else:
-                y = tf.argmax(out, axis=-1)
+                y = tf.argmax(out, axis=-1, output_type=tf.int32)
 
-        output = tf.convert_to_tensor(output, dtype=tf.float32)
-        output = tf.transpose(output, perm=[1, 0, 2])
-
-        return output
+        return output[:, 1:]
 
 
 class Encoder(Model):
@@ -96,10 +94,12 @@ if __name__ == '__main__':
     np.random.seed(1234)
     tf.random.set_seed(1234)
 
+    @tf.function
     def compute_loss(label, pred, from_logits=False):
         return categorical_crossentropy(label, pred,
                                         from_logits=from_logits)
 
+    # @tf.function
     def train_step(x, t, depth_t,
                    teacher_forcing_rate=0.5,
                    pad_value=0):
@@ -116,6 +116,7 @@ if __name__ == '__main__':
 
         return preds
 
+    @tf.function
     def valid_step(x, t, depth_t, pad_value=0):
         preds = model(x, t, use_teacher_forcing=False)
         label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
@@ -126,6 +127,7 @@ if __name__ == '__main__':
 
         return preds
 
+    @tf.function
     def test_step(x):
         preds = model(x)
         return preds
