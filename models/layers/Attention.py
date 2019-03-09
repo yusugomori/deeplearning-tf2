@@ -45,7 +45,7 @@ class Attention(Layer):
         score = score - tf.reduce_max(score,
                                       axis=-1,
                                       keepdims=True)  # softmax max trick
-
+        score = tf.exp(score)
         if source is not None:
             len_source_sequences = \
                 tf.reduce_sum(tf.cast(tf.not_equal(source, pad_value),
@@ -55,9 +55,7 @@ class Attention(Layer):
                                          tf.shape(score)[-1]),
                         tf.float32)
 
-            score = tf.exp(score) * mask_source[:, tf.newaxis, :]
-        else:
-            score = tf.exp(score)
+            score = score * mask_source[:, tf.newaxis, :]
 
         a = score / tf.reduce_sum(score, axis=-1, keepdims=True)
         c = tf.einsum('ijk,ikl->ijl', a, hs)

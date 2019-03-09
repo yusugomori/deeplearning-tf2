@@ -25,7 +25,7 @@ class DotProductAttention(Layer):
             if len(mask.shape) == 2:
                 mask = mask[:, tf.newaxis, :]
             mask = tf.cast(mask, tf.float32)
-            score *= mask
+            score = score * mask
 
         a = score / tf.reduce_sum(score, axis=-1, keepdims=True)
         c = tf.einsum('ijk,ikl->ijl', a, v)
