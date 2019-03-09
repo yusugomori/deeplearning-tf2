@@ -26,9 +26,6 @@ class PositionalEncoding(Layer):
 
     def call(self, x, mask=None):
         pe = self.PE[tf.newaxis, :tf.shape(x)[1], :]
-        if mask is not None:
-            pe = tf.tile(pe, [mask.shape[0], 1, 1])
-            pe *= tf.cast(mask, tf.float32)[:, :, tf.newaxis]
         return x + pe
 
     def initializer(self, input_shape, dtype=tf.float32):
