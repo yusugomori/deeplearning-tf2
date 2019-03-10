@@ -48,6 +48,8 @@ class Transformer(Model):
     def call(self, source, target=None):
         source_mask = self.sequence_mask(source)
 
+        hs = self.encoder(source, mask=source_mask)
+
         if target is not None:
             len_target_sequences = target.shape[1]
             target_mask = self.sequence_mask(target)
@@ -55,22 +57,19 @@ class Transformer(Model):
             target_mask = \
                 tf.greater(target_mask[:, tf.newaxis, :] + subsequent_mask,
                            1)
-        else:
-            batch_size = len(source)
-            len_target_sequences = self._max_len
-            target_mask = None
 
-        hs = self.encoder(source, mask=source_mask)
-
-        if target is not None:
             y = self.decoder(target, hs,
                              mask=target_mask,
                              source_mask=source_mask)
             output = self.out(y)
         else:
+            batch_size = len(source)
+            len_target_sequences = self._max_len
+
             output = tf.ones((batch_size, 1), dtype=tf.int32) * self._BOS
 
             for t in range(len_target_sequences):
+                target_mask = self.subsequence_mask(output)
                 out = self.decoder(output, hs,
                                    mask=target_mask,
                                    source_mask=source_mask)
