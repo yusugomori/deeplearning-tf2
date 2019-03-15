@@ -63,7 +63,7 @@ class Transformer(Model):
                              source_mask=source_mask)
             output = self.out(y)
         else:
-            batch_size = len(source)
+            batch_size = source.shape[0]
             len_target_sequences = self._max_len
 
             output = tf.ones((batch_size, 1), dtype=tf.int32) * self._BOS
@@ -247,9 +247,11 @@ if __name__ == '__main__':
     np.random.seed(1234)
     tf.random.set_seed(1234)
 
+    @tf.function
     def compute_loss(label, pred):
         return criterion(label, pred)
 
+    @tf.function
     def train_step(x, t, depth_t):
         with tf.GradientTape() as tape:
             preds = model(x, t)
@@ -260,6 +262,7 @@ if __name__ == '__main__':
 
         return preds
 
+    @tf.function
     def valid_step(x, t, depth_t):
         preds = model(x, t)
         loss = compute_loss(t, preds)
@@ -267,6 +270,7 @@ if __name__ == '__main__':
 
         return preds
 
+    @tf.function
     def test_step(x):
         preds = model(x)
         return preds
