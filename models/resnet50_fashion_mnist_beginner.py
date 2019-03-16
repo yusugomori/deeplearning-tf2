@@ -2,8 +2,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import \
-    Input, GlobalAveragePooling2D, Add, \
-    Dense, Activation, Flatten, \
+    Input, GlobalAveragePooling2D, Add, Dense, Activation, \
     BatchNormalization, Conv2D, MaxPooling2D
 
 
