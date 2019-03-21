@@ -5,10 +5,10 @@ from tensorflow.keras.layers import Layer
 
 class ScaledDotProductAttention(Layer):
     def __init__(self,
-                 d_model,
+                 d_k,
                  **kwargs):
         self.d_model = d_model
-        self.scaler = np.sqrt(d_model)
+        self.scaler = np.sqrt(d_k)
         super().__init__(**kwargs)
 
     def build(self, input_shape):

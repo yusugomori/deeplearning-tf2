@@ -10,9 +10,9 @@ class MultiHeadAttention(Layer):
                  **kwargs):
         self.h = h
         self.d_model = d_model
-        self.d_k = d_model // h
-        self.d_v = d_model // h
-        self.attn = ScaledDotProductAttention(d_model)
+        self.d_k = d_k = d_model // h
+        self.d_v = d_v = d_model // h
+        self.attn = ScaledDotProductAttention(d_k)
 
         super().__init__(**kwargs)
 
