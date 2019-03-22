@@ -7,7 +7,7 @@ class ScaledDotProductAttention(Layer):
     def __init__(self,
                  d_k,
                  **kwargs):
-        self.d_model = d_model
+        self.d_k = d_k
         self.scaler = np.sqrt(d_k)
         super().__init__(**kwargs)
 
