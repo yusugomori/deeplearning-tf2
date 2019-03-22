@@ -3,9 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers \
-    import Dense, Dropout, Embedding, LSTM, GRU, TimeDistributed, Conv1D
-from tensorflow.keras.losses \
-    import sparse_categorical_crossentropy, categorical_crossentropy
+    import Activation, Dense, Dropout, Embedding, Conv1D
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from utils.datasets.small_parallel_enja import load_small_parallel_enja
 from utils.preprocessing.sequence import sort
@@ -51,12 +49,11 @@ class Transformer(Model):
         hs = self.encoder(source, mask=source_mask)
 
         if target is not None:
+            target = target[:, :-1]
             len_target_sequences = target.shape[1]
-            target_mask = self.sequence_mask(target)
+            target_mask = self.sequence_mask(target)[:, tf.newaxis, :]
             subsequent_mask = self.subsequence_mask(target)
-            target_mask = \
-                tf.greater(target_mask[:, tf.newaxis, :] + subsequent_mask,
-                           1)
+            target_mask = tf.greater(target_mask + subsequent_mask, 1)
 
             y = self.decoder(target, hs,
                              mask=target_mask,
@@ -68,7 +65,7 @@ class Transformer(Model):
 
             output = tf.ones((batch_size, 1), dtype=tf.int32) * self._BOS
 
-            for t in range(len_target_sequences):
+            for t in range(len_target_sequences - 1):
                 target_mask = self.subsequence_mask(output)
                 out = self.decoder(output, hs,
                                    mask=target_mask,
@@ -142,6 +139,7 @@ class EncoderLayer(Model):
         h = self.attn(x, x, x, mask=mask)
         h = self.dropout1(h)
         h = self.norm1(x + h)
+
         y = self.ff(h)
         y = self.dropout2(y)
         y = self.norm2(h + y)
@@ -251,26 +249,34 @@ if __name__ == '__main__':
     def compute_loss(label, pred):
         return criterion(label, pred)
 
-    @tf.function
-    def train_step(x, t, depth_t):
+    # @tf.function
+    def train_step(x, t, depth_t, pad_value=0):
         with tf.GradientTape() as tape:
             preds = model(x, t)
-            loss = compute_loss(t, preds)
+            t = t[:, 1:]
+            label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
+            mask_t = tf.cast(tf.not_equal(t, pad_value), tf.float32)
+            label = label * mask_t[:, :, tf.newaxis]
+            loss = compute_loss(label, preds)
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
         train_loss(loss)
 
         return preds
 
-    @tf.function
-    def valid_step(x, t, depth_t):
+    # @tf.function
+    def valid_step(x, t, depth_t, pad_value=0):
         preds = model(x, t)
-        loss = compute_loss(t, preds)
+        t = t[:, 1:]
+        label = tf.one_hot(t, depth=depth_t, dtype=tf.float32)
+        mask_t = tf.cast(tf.not_equal(t, pad_value), tf.float32)
+        label = label * mask_t[:, :, tf.newaxis]
+        loss = compute_loss(label, preds)
         valid_loss(loss)
 
         return preds
 
-    @tf.function
+    # @tf.function
     def test_step(x):
         preds = model(x)
         return preds
@@ -281,29 +287,63 @@ if __name__ == '__main__':
     '''
     Load data
     '''
+    class ParallelDataLoader(object):
+        def __init__(self, dataset,
+                     batch_size=128,
+                     shuffle=False,
+                     random_state=None):
+            if type(dataset) is not tuple:
+                raise ValueError('argument `dataset` must be tuple,'
+                                 ' not {}.'.format(type(dataset)))
+            self.dataset = list(zip(dataset[0], dataset[1]))
+            self.batch_size = batch_size
+            self.shuffle = shuffle
+            if random_state is None:
+                random_state = np.random.RandomState(1234)
+            self.random_state = random_state
+            self._idx = 0
+
+        def __len__(self):
+            return len(self.dataset)
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            if self._idx >= len(self.dataset):
+                self._reorder()
+                raise StopIteration()
+
+            x, y = zip(*self.dataset[self._idx:(self._idx + self.batch_size)])
+            x, y = sort(x, y, order='descend')
+            x = pad_sequences(x, padding='post')
+            y = pad_sequences(y, padding='post')
+
+            x = tf.convert_to_tensor(x, dtype=tf.int32)
+            y = tf.convert_to_tensor(y, dtype=tf.int32)
+
+            self._idx += self.batch_size
+
+            return x, y
+
+        def _reorder(self):
+            if self.shuffle:
+                self.data = shuffle(self.dataset,
+                                    random_state=self.random_state)
+            self._idx = 0
+
     (x_train, y_train), \
         (x_test, y_test), \
         (num_x, num_y), \
         (w2i_x, w2i_y), (i2w_x, i2w_y) = \
         load_small_parallel_enja(to_ja=True)
 
-    N = len(x_train)
-    train_size = int(N * 0.8)
-    valid_size = N - train_size
-    (x_train, y_train), (x_valid, y_valid) = \
-        (x_train[:train_size], y_train[:train_size]), \
-        (x_train[train_size:], y_train[train_size:])
-
-    x_train, y_train = sort(x_train, y_train)
-    x_valid, y_valid = sort(x_valid, y_valid)
-    x_test, y_test = sort(x_test, y_test)
-
-    train_size = 40000
-    valid_size = 200
-    test_size = 10
-    x_train, y_train = x_train[:train_size], y_train[:train_size]
-    x_valid, y_valid = x_valid[:valid_size], y_valid[:valid_size]
-    x_test, y_test = x_test[:test_size], y_test[:test_size]
+    train_dataloader = ParallelDataLoader((x_train, y_train),
+                                          shuffle=True)
+    valid_dataloader = ParallelDataLoader((x_test, y_test))
+    test_dataloader = ParallelDataLoader((x_test, y_test),
+                                         batch_size=1,
+                                         shuffle=True)
 
     '''
     Build model
@@ -313,18 +353,15 @@ if __name__ == '__main__':
                         N=3,
                         h=4,
                         d_model=128,
-                        d_ff=128,
+                        d_ff=256,
                         max_len=20)
-    criterion = tf.losses.SparseCategoricalCrossentropy()
+    criterion = tf.losses.CategoricalCrossentropy()
     optimizer = tf.keras.optimizers.Adam()
 
     '''
     Train model
     '''
-    epochs = 30
-    batch_size = 100
-    n_batches = len(x_train) // batch_size
-
+    epochs = 20
     train_loss = tf.keras.metrics.Mean()
     valid_loss = tf.keras.metrics.Mean()
 
@@ -332,25 +369,26 @@ if __name__ == '__main__':
         print('-' * 20)
         print('Epoch: {}'.format(epoch+1))
 
-        for batch in range(n_batches):
-            start = batch * batch_size
-            end = start + batch_size
+        for idx, (source, target) in enumerate(train_dataloader):
+            train_step(source, target, num_y)
 
-            _x_train = pad_sequences(x_train[start:end], padding='post')
-            _y_train = pad_sequences(y_train[start:end], padding='post')
-            train_step(_x_train, _y_train, num_y)
+        for (source, target) in valid_dataloader:
+            valid_step(source, target, num_y)
 
-        _x_valid = pad_sequences(x_valid, padding='post')
-        _y_valid = pad_sequences(y_valid, padding='post')
-        valid_step(_x_valid, _y_valid, num_y)
         print('Valid loss: {:.3}'.format(valid_loss.result()))
 
-        for i, source in enumerate(x_test):
-            out = test_step(np.array(source)[np.newaxis, :])[0]
-            out = ' '.join(ids_to_sentence(out.numpy(), i2w_y))
+        for idx, (source, target) in enumerate(test_dataloader):
+            out = test_step(source)
+            out = tf.reshape(out, shape=[-1]).numpy().tolist()
+            out = ' '.join(ids_to_sentence(out, i2w_y))
+            source = tf.reshape(source, shape=[-1]).numpy().tolist()
+            target = tf.reshape(target, shape=[-1]).numpy().tolist()
             source = ' '.join(ids_to_sentence(source, i2w_x))
-            target = ' '.join(ids_to_sentence(y_test[i], i2w_y))
+            target = ' '.join(ids_to_sentence(target, i2w_y))
             print('>', source)
             print('=', target)
             print('<', out)
             print()
+
+            if idx >= 10:
+                break

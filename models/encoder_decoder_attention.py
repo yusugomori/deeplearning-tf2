@@ -92,7 +92,7 @@ if __name__ == '__main__':
     def compute_loss(label, pred):
         return criterion(label, pred)
 
-    @tf.function
+    # @tf.function
     def train_step(x, t, depth_t,
                    teacher_forcing_rate=0.5,
                    pad_value=0):
