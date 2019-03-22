@@ -44,7 +44,7 @@ models/
 ├── resnet50_fashion_mnist.py
 ├── resnet50_fashion_mnist_beginner.py
 └── transformer.py
-|
+│
 └── layers/
     ├── Attention.py
     ├── DotProductAttention.py
