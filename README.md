@@ -24,6 +24,7 @@ $ pip install tf-nightly-2.0-preview
 * MLP
 * LeNet
 * ResNet (ResNet34, ResNet50)
+* DenseNet (DenseNet121)
 * Encoder-Decoder (LSTM)
 * EncoderDecoder (Attention)
 * Transformer
