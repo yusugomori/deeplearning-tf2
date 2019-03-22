@@ -28,10 +28,12 @@ $ pip install tf-nightly-2.0-preview
 * Encoder-Decoder (LSTM)
 * EncoderDecoder (Attention)
 * Transformer
+* Deep Q-Network
 
 ```
 models/
 ├── densenet121_cifar10_beginner.py
+├── dqn_cartpole.py
 ├── encoder_decoder_attention.py
 ├── encoder_decoder_lstm.py
 ├── lenet_mnist.py
