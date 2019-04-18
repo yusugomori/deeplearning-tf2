@@ -29,6 +29,7 @@ $ pip install tf-nightly-2.0-preview
 * EncoderDecoder (Attention)
 * Transformer
 * Deep Q-Network
+* Variational Autoencoder
 
 ```
 models/
@@ -47,6 +48,7 @@ models/
 ├── resnet50_fashion_mnist.py
 ├── resnet50_fashion_mnist_beginner.py
 ├── transformer.py
+├── vae_fashion_mnist.py
 │
 └── layers/
     ├── Attention.py
