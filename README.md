@@ -30,6 +30,7 @@ $ pip install tf-nightly-2.0-preview
 * Transformer
 * Deep Q-Network
 * Variational Autoencoder
+* Generative Adversarial Network
 
 ```
 models/
@@ -37,6 +38,7 @@ models/
 ├── dqn_cartpole.py
 ├── encoder_decoder_attention.py
 ├── encoder_decoder_lstm.py
+├── gan_fashion_mnist.py
 ├── lenet_mnist.py
 ├── lenet_mnist_beginner.py
 ├── logistic_regression_mnist.py
