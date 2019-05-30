@@ -12,12 +12,6 @@ See also implementations with PyTorch 1.0 [here](https://github.com/yusugomori/d
 $ pip install tensorflow==2.0.0-alpha0
 ```
 
-or
-
-```shell
-$ pip install tf-nightly-2.0-preview
-```
-
 ## Models
 
 * Logistic Regression
