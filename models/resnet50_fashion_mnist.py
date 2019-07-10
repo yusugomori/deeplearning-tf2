@@ -94,7 +94,7 @@ class Block(Model):
                             kernel_size=(3, 3),
                             padding='same')
         self.bn2 = BatchNormalization()
-        self.relu2 = BatchNormalization()
+        self.relu2 = Activation('relu')
         self.conv3 = Conv2D(channel_out,
                             kernel_size=(1, 1),
                             padding='same')
