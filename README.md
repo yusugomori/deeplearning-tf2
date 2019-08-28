@@ -9,7 +9,7 @@ See also implementations with PyTorch 1.0 [here](https://github.com/yusugomori/d
 * TensorFlow >= 2.0
 
 ```shell
-$ pip install tensorflow==2.0.0-beta0
+$ pip install tensorflow==2.0.0-rc0
 ```
 
 ## Models
